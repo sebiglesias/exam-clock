@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Apply stored theme before first paint to avoid flash -->
+  <script>
+    (function() {
+      var t = localStorage.getItem('exam-clock-theme') || 'system';
+      if (t !== 'system') document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 
   <!-- ── SEO Core ─────────────────────────────────────────── -->
   <title>Exam Clock — Free Online Exam Timer with Countdown</title>
@@ -302,6 +309,57 @@
       z-index: 1;
     }
 
+    /* ── Light theme ────────────────────────────────────── */
+    html[data-theme="light"] {
+      --bg:      #f2f4f8;
+      --surface: #ffffff;
+      --border:  #dde1eb;
+      --text:    #111520;
+      --muted:   #8490aa;
+    }
+    @media (prefers-color-scheme: light) {
+      html:not([data-theme="dark"]) {
+        --bg:      #f2f4f8;
+        --surface: #ffffff;
+        --border:  #dde1eb;
+        --text:    #111520;
+        --muted:   #8490aa;
+      }
+    }
+    html[data-theme="light"] .field input[type="time"] { color-scheme: light; }
+    @media (prefers-color-scheme: light) {
+      html:not([data-theme="dark"]) .field input[type="time"] { color-scheme: light; }
+    }
+
+    /* ── Theme switcher ──────────────────────────────────── */
+    #theme-switcher {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      gap: 2px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+      z-index: 100;
+      transition: background .25s, border-color .25s;
+    }
+    .theme-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 6px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s, color .15s;
+    }
+    .theme-btn:hover  { background: var(--border); color: var(--text); }
+    .theme-btn.active { background: var(--border); color: var(--text); }
+
     /* ── Animations ─────────────────────────────────────── */
 
     @keyframes fadeUp {
@@ -355,6 +413,34 @@
   <div id="finished">Exam Finished</div>
 </div>
 
+<!-- ── Theme switcher ───────────────────────────────────────── -->
+<div id="theme-switcher" role="group" aria-label="Color theme">
+  <button class="theme-btn" data-theme="light" title="Light mode">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="2.8" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="8" y1="1" x2="8" y2="3.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="8" y1="12.8" x2="8" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="1" y1="8" x2="3.2" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="12.8" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="3.05" y1="3.05" x2="4.63" y2="4.63" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="11.37" y1="11.37" x2="12.95" y2="12.95" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="3.05" y1="12.95" x2="4.63" y2="11.37" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="11.37" y1="4.63" x2="12.95" y2="3.05" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <button class="theme-btn" data-theme="system" title="System preference">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="1" y="2" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M5 14h6M8 12v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <button class="theme-btn" data-theme="dark" title="Dark mode">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6 6 0 1 0 8 8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
 <!-- ── Progress bar ──────────────────────────────────────── -->
 <div id="bar-track">
   <div id="bar-fill">
@@ -363,6 +449,45 @@
 </div>
 
 <script>
+  // ── Theme ──────────────────────────────────────────────────
+  (function() {
+    const KEY = 'exam-clock-theme';
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const darkMQ    = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function isDarkActive(theme) {
+      return theme === 'dark' || (theme === 'system' && darkMQ.matches);
+    }
+
+    function applyTheme(theme) {
+      const html = document.documentElement;
+      if (theme === 'system') html.removeAttribute('data-theme');
+      else html.setAttribute('data-theme', theme);
+
+      document.querySelectorAll('.theme-btn').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.theme === theme)
+      );
+      metaTheme.content = isDarkActive(theme) ? '#0c0e14' : '#f2f4f8';
+    }
+
+    function setTheme(theme) {
+      localStorage.setItem(KEY, theme);
+      applyTheme(theme);
+    }
+
+    // Boot with stored preference
+    applyTheme(localStorage.getItem(KEY) || 'system');
+
+    document.querySelectorAll('.theme-btn').forEach(btn =>
+      btn.addEventListener('click', () => setTheme(btn.dataset.theme))
+    );
+
+    // Re-apply when OS preference changes (only affects system mode)
+    darkMQ.addEventListener('change', () => {
+      if ((localStorage.getItem(KEY) || 'system') === 'system') applyTheme('system');
+    });
+  })();
+
   // ── Helpers ────────────────────────────────────────────────
   function pad(n) { return String(n).padStart(2, '0'); }
 
