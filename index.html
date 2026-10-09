@@ -3,18 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Apply stored theme before first paint to avoid flash -->
+  <!-- Apply stored theme and language before first paint to avoid flash -->
   <script>
     (function() {
       var t = localStorage.getItem('exam-clock-theme') || 'system';
       if (t !== 'system') document.documentElement.setAttribute('data-theme', t);
+
+      var p = new URLSearchParams(window.location.search);
+      var l = p.get('lang') || localStorage.getItem('exam-clock-lang');
+      if (!l) {
+        var nav = (navigator.language || navigator.userLanguage || '').toLowerCase();
+        if (nav.startsWith('es')) l = 'es';
+        else if (nav.startsWith('pt')) l = 'pt';
+        else l = 'en';
+      }
+      document.documentElement.lang = l;
     })();
   </script>
 
   <!-- ── SEO Core ─────────────────────────────────────────── -->
-  <title>Exam Clock — Free Online Exam Timer with Countdown</title>
-  <meta name="description" content="Free online exam clock. Enter start and end times to get a live countdown, animated progress bar, and automatic overtime tracking when time runs out." />
-  <meta name="keywords" content="exam clock, exam timer, online exam timer, exam countdown, classroom timer, test timer, exam progress bar, exam time tracker, free exam timer" />
+  <title id="doc-title">Exam Clock — Free Online Exam Timer with Countdown</title>
+  <meta id="meta-desc" name="description" content="Free online exam clock. Enter start and end times to get a live countdown, animated progress bar, and automatic overtime tracking when time runs out." />
+  <meta name="keywords" content="exam clock, exam timer, online exam timer, exam countdown, classroom timer, test timer, exam progress bar, exam time tracker, free exam timer, reloj de examen, temporizador de examen" />
   <meta name="author" content="Sebastián Iglesias" />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#0c0e14" />
@@ -64,7 +74,7 @@
     "applicationCategory": "UtilitiesApplication",
     "operatingSystem": "Any",
     "browserRequirements": "Requires JavaScript",
-    "inLanguage": "en",
+    "inLanguage": ["en", "es", "pt"],
     "isAccessibleForFree": true,
     "offers": {
       "@type": "Offer",
@@ -80,6 +90,7 @@
       "Live countdown timer",
       "Animated progress bar",
       "Overtime tracking",
+      "Multi-language support (English, Spanish, Portuguese)",
       "URL parameter configuration",
       "No login required"
     ]
@@ -89,7 +100,7 @@
   <!-- ── Fonts ─────────────────────────────────────────────── -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg:          #0c0e14;
@@ -342,20 +353,45 @@
       html:not([data-theme="dark"]) .field input[type="time"] { color-scheme: light; }
     }
 
-    /* ── Theme switcher ──────────────────────────────────── */
-    #theme-switcher {
+    /* ── Top controls (Language & Theme) ─────────────────── */
+    #top-bar {
       position: fixed;
       top: 16px;
       right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    #lang-switcher,
+    #theme-switcher {
       display: flex;
       gap: 2px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 4px;
-      z-index: 100;
       transition: background .25s, border-color .25s;
     }
+
+    .lang-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .5px;
+      line-height: 1.3;
+      transition: background .15s, color .15s;
+    }
+    .lang-btn:hover  { background: var(--border); color: var(--text); }
+    .lang-btn.active { background: var(--border); color: var(--text); font-weight: 700; }
+
     .theme-btn {
       background: none;
       border: none;
@@ -370,6 +406,13 @@
     }
     .theme-btn:hover  { background: var(--border); color: var(--text); }
     .theme-btn.active { background: var(--border); color: var(--text); }
+
+    @media (max-width: 480px) {
+      .card { padding: 32px 24px; }
+      #top-bar { top: 12px; right: 12px; gap: 6px; }
+      .lang-btn { padding: 4px 6px; font-size: 10px; }
+      .theme-btn { padding: 5px 6px; }
+    }
 
     /* ── Animations ─────────────────────────────────────── */
 
@@ -386,22 +429,58 @@
 </head>
 <body>
 
+<!-- ── Top Controls (Language & Theme switchers) ──────────── -->
+<div id="top-bar">
+  <div id="lang-switcher" role="group" aria-label="Language">
+    <button class="lang-btn" data-lang="es">ES</button>
+    <button class="lang-btn" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="pt">PT</button>
+  </div>
+
+  <div id="theme-switcher" role="group" aria-label="Color theme">
+    <button class="theme-btn" data-theme="light" title="Light mode">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="8" cy="8" r="2.8" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="8" y1="1" x2="8" y2="3.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="8" y1="12.8" x2="8" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="1" y1="8" x2="3.2" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="12.8" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="3.05" y1="3.05" x2="4.63" y2="4.63" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="11.37" y1="11.37" x2="12.95" y2="12.95" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="3.05" y1="12.95" x2="4.63" y2="11.37" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="11.37" y1="4.63" x2="12.95" y2="3.05" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <button class="theme-btn" data-theme="system" title="System preference">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <rect x="1" y="2" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M5 14h6M8 12v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <button class="theme-btn" data-theme="dark" title="Dark mode">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6 6 0 1 0 8 8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
 <!-- ── Setup screen ──────────────────────────────────────── -->
 <div id="setup">
   <div class="card">
-    <h1>Exam Clock</h1>
-    <p>Set the exam window. The clock will track progress and alert when time is up.</p>
+    <h1 data-i18n="setupTitle">Exam Clock</h1>
+    <p data-i18n="setupDesc">Set the exam window. The clock will track progress and alert when time is up.</p>
 
     <div class="field">
-      <label>Start time</label>
+      <label data-i18n="startLabel">Start time</label>
       <input type="time" id="start-input" step="60" />
     </div>
     <div class="field">
-      <label>End time</label>
+      <label data-i18n="endLabel">End time</label>
       <input type="time" id="end-input" step="60" />
     </div>
 
-    <button class="btn" onclick="launch()">Start Exam Clock →</button>
+    <button class="btn" id="start-btn" onclick="launch()" data-i18n="startBtn">Start Exam Clock →</button>
   </div>
 </div>
 
@@ -411,45 +490,17 @@
 
   <div id="chips">
     <div class="chip">
-      <span class="lbl">Start</span>
+      <span class="lbl" data-i18n="chipStart">Start</span>
       <span class="val" id="chip-start">--:--</span>
     </div>
     <div class="chip">
-      <span class="lbl">End</span>
+      <span class="lbl" data-i18n="chipEnd">End</span>
       <span class="val" id="chip-end">--:--</span>
     </div>
   </div>
 
   <div id="status"></div>
-  <div id="finished">Exam Finished</div>
-</div>
-
-<!-- ── Theme switcher ───────────────────────────────────────── -->
-<div id="theme-switcher" role="group" aria-label="Color theme">
-  <button class="theme-btn" data-theme="light" title="Light mode">
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <circle cx="8" cy="8" r="2.8" stroke="currentColor" stroke-width="1.5"/>
-      <line x1="8" y1="1" x2="8" y2="3.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="8" y1="12.8" x2="8" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="1" y1="8" x2="3.2" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="12.8" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="3.05" y1="3.05" x2="4.63" y2="4.63" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="11.37" y1="11.37" x2="12.95" y2="12.95" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="3.05" y1="12.95" x2="4.63" y2="11.37" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="11.37" y1="4.63" x2="12.95" y2="3.05" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
-  </button>
-  <button class="theme-btn" data-theme="system" title="System preference">
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <rect x="1" y="2" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-      <path d="M5 14h6M8 12v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
-  </button>
-  <button class="theme-btn" data-theme="dark" title="Dark mode">
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6 6 0 1 0 8 8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
+  <div id="finished" data-i18n="finished">Exam Finished</div>
 </div>
 
 <!-- ── Progress bar ──────────────────────────────────────── -->
@@ -460,6 +511,165 @@
 </div>
 
 <script>
+  // ── Internationalization Dictionary ────────────────────────
+  const I18N = {
+    en: {
+      seoTitle: "Exam Clock — Free Online Exam Timer with Countdown",
+      seoDesc: "Free online exam clock. Enter start and end times to get a live countdown, animated progress bar, and automatic overtime tracking when time runs out.",
+      setupTitle: "Exam Clock",
+      setupDesc: "Set the exam window. The clock will track progress and alert when time is up.",
+      startLabel: "Start time",
+      endLabel: "End time",
+      startBtn: "Start Exam Clock →",
+      chipStart: "Start",
+      chipEnd: "End",
+      startsIn: "Starts in {time}",
+      remaining: "{time} remaining",
+      overtime: "+{time} overtime",
+      finished: "Exam Finished",
+      alertMissing: "Please enter both start and end times.",
+      alertOrder: "End time must be after start time.",
+      themeLight: "Light mode",
+      themeSystem: "System preference",
+      themeDark: "Dark mode",
+      colorThemeLabel: "Color theme",
+      langLabel: "Language"
+    },
+    es: {
+      seoTitle: "Reloj de Examen — Temporizador Online con Cuenta Regresiva",
+      seoDesc: "Reloj de examen online gratis. Ingresa las horas de inicio y fin para ver una cuenta regresiva en vivo, barra de progreso animada y seguimiento de tiempo extra.",
+      setupTitle: "Reloj de Examen",
+      setupDesc: "Configura el horario del examen. El reloj controlará el progreso y avisará cuando termine el tiempo.",
+      startLabel: "Hora de inicio",
+      endLabel: "Hora de finalización",
+      startBtn: "Iniciar Reloj de Examen →",
+      chipStart: "Inicio",
+      chipEnd: "Fin",
+      startsIn: "Comienza en {time}",
+      remaining: "{time} restantes",
+      overtime: "+{time} tiempo extra",
+      finished: "Examen Finalizado",
+      alertMissing: "Por favor ingresa tanto la hora de inicio como la de finalización.",
+      alertOrder: "La hora de finalización debe ser posterior a la de inicio.",
+      themeLight: "Modo claro",
+      themeSystem: "Preferencia del sistema",
+      themeDark: "Modo oscuro",
+      colorThemeLabel: "Tema de color",
+      langLabel: "Idioma"
+    },
+    pt: {
+      seoTitle: "Relógio de Exame — Temporizador Online com Contagem Regressiva",
+      seoDesc: "Relógio de exame online grátis. Insira os horários de início e término para contagem regressiva ao vivo, barra de progresso animada e tempo extra.",
+      setupTitle: "Relógio de Exame",
+      setupDesc: "Defina o horário da prova. O relógio acompanhará o progresso e avisará quando o tempo acabar.",
+      startLabel: "Hora de início",
+      endLabel: "Hora de término",
+      startBtn: "Iniciar Relógio de Exame →",
+      chipStart: "Início",
+      chipEnd: "Fim",
+      startsIn: "Começa em {time}",
+      remaining: "{time} restantes",
+      overtime: "+{time} tempo extra",
+      finished: "Exame Finalizado",
+      alertMissing: "Por favor, insira o horário de início e de término.",
+      alertOrder: "O horário de término deve ser posterior ao de início.",
+      themeLight: "Modo claro",
+      themeSystem: "Preferência do sistema",
+      themeDark: "Modo escuro",
+      colorThemeLabel: "Tema de cores",
+      langLabel: "Idioma"
+    }
+  };
+
+  const LANG_KEY = 'exam-clock-lang';
+  let currentLang = 'en';
+  let updateClockTick = null;
+
+  function t(key, replacements) {
+    let str = (I18N[currentLang] && I18N[currentLang][key]) || (I18N.en[key] || '');
+    if (replacements) {
+      for (const [k, v] of Object.entries(replacements)) {
+        str = str.replace(`{${k}}`, v);
+      }
+    }
+    return str;
+  }
+
+  function applyLang(lang) {
+    if (!I18N[lang]) lang = 'en';
+    currentLang = lang;
+    document.documentElement.lang = lang;
+    localStorage.setItem(LANG_KEY, lang);
+
+    // Update text elements with data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (I18N[lang] && I18N[lang][key]) {
+        el.textContent = I18N[lang][key];
+      }
+    });
+
+    // Update switcher buttons and accessibility titles
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+
+    const langSwitcher = document.getElementById('lang-switcher');
+    if (langSwitcher) langSwitcher.setAttribute('aria-label', t('langLabel'));
+
+    const themeSwitcher = document.getElementById('theme-switcher');
+    if (themeSwitcher) themeSwitcher.setAttribute('aria-label', t('colorThemeLabel'));
+
+    const btnLight = document.querySelector('.theme-btn[data-theme="light"]');
+    if (btnLight) btnLight.title = t('themeLight');
+    const btnSys = document.querySelector('.theme-btn[data-theme="system"]');
+    if (btnSys) btnSys.title = t('themeSystem');
+    const btnDark = document.querySelector('.theme-btn[data-theme="dark"]');
+    if (btnDark) btnDark.title = t('themeDark');
+
+    // Update document title and meta description
+    const titleEl = document.getElementById('doc-title');
+    if (titleEl) titleEl.textContent = t('seoTitle');
+    const descEl = document.getElementById('meta-desc');
+    if (descEl) descEl.content = t('seoDesc');
+
+    // If clock is running, immediately refresh text strings
+    if (typeof updateClockTick === 'function') {
+      updateClockTick();
+    }
+
+    // Keep URL parameter synchronized without reloading
+    const url = new URL(window.location);
+    if (url.searchParams.has('start') && url.searchParams.has('end')) {
+      url.searchParams.set('lang', lang);
+      window.history.replaceState({}, '', url.toString());
+    }
+  }
+
+  // Determine initial language: URL param > localStorage > browser language
+  (function initLang() {
+    const params = new URLSearchParams(window.location.search);
+    const paramLang = params.get('lang');
+    const storedLang = localStorage.getItem(LANG_KEY);
+    let resolved = 'en';
+
+    if (paramLang && I18N[paramLang]) {
+      resolved = paramLang;
+    } else if (storedLang && I18N[storedLang]) {
+      resolved = storedLang;
+    } else {
+      const navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+      if (navLang.startsWith('es')) resolved = 'es';
+      else if (navLang.startsWith('pt')) resolved = 'pt';
+    }
+
+    applyLang(resolved);
+
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => applyLang(btn.dataset.lang));
+    });
+  })();
+
   // ── Theme ──────────────────────────────────────────────────
   (function() {
     const KEY = 'exam-clock-theme';
@@ -478,7 +688,7 @@
       document.querySelectorAll('.theme-btn').forEach(btn =>
         btn.classList.toggle('active', btn.dataset.theme === theme)
       );
-      metaTheme.content = isDarkActive(theme) ? '#0c0e14' : '#f2f4f8';
+      if (metaTheme) metaTheme.content = isDarkActive(theme) ? '#0c0e14' : '#f2f4f8';
     }
 
     function setTheme(theme) {
@@ -520,9 +730,9 @@
   function launch() {
     const s = document.getElementById('start-input').value;
     const e = document.getElementById('end-input').value;
-    if (!s || !e)  { alert('Please enter both start and end times.'); return; }
-    if (s >= e)    { alert('End time must be after start time.'); return; }
-    window.location.search = `?start=${encodeURIComponent(s)}&end=${encodeURIComponent(e)}`;
+    if (!s || !e)  { alert(t('alertMissing')); return; }
+    if (s >= e)    { alert(t('alertOrder')); return; }
+    window.location.search = `?start=${encodeURIComponent(s)}&end=${encodeURIComponent(e)}&lang=${encodeURIComponent(currentLang)}`;
   }
 
   document.getElementById('start-input').addEventListener('keydown', ev => {
@@ -565,7 +775,7 @@
       if (now < startDate) {
         // Not started yet
         const secs = Math.ceil((startDate - now) / 1000);
-        elStatus.textContent = `Starts in ${fmtDuration(secs)}`;
+        elStatus.textContent = t('startsIn', { time: fmtDuration(secs) });
         elFill.style.width = '0%';
         elBarText.textContent = '';
         elFill.classList.remove('overtime');
@@ -575,7 +785,7 @@
         const elapsed    = now - startDate;
         const pct        = Math.min((elapsed / total) * 100, 100);
         const remaining  = Math.max(0, Math.ceil((endDate - now) / 1000));
-        elStatus.textContent = `${fmtDuration(remaining)} remaining`;
+        elStatus.textContent = t('remaining', { time: fmtDuration(remaining) });
         elFill.style.width = pct + '%';
         elBarText.textContent = '';
         elFill.classList.remove('overtime');
@@ -589,10 +799,11 @@
           elFill.classList.add('overtime');
           wasOvertime = true;
         }
-        elBarText.textContent = `+${fmtDuration(overSecs)} overtime`;
+        elBarText.textContent = t('overtime', { time: fmtDuration(overSecs) });
       }
     }
 
+    updateClockTick = tick;
     tick();
     setInterval(tick, 1000);
   }

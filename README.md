@@ -13,6 +13,7 @@ A single-file, zero-build exam timer. Enter start and end times to get a live co
 - **Overtime tracking** — bar turns red and counts up once time is up
 - **Pre-exam countdown** — shows "Starts in X" if the clock is opened early
 - **URL parameters** — share or bookmark a pre-configured clock directly
+- **Multi-language (i18n)** — English, Spanish, and Portuguese with live switcher, URL parameter, and browser detection
 - **Dark / Light / System theme** — persisted in `localStorage`, no flash on load
 - **No build step** — a single `index.html` with inlined CSS and JS
 
@@ -24,10 +25,10 @@ Open `index.html` in a browser, enter the start and end times, and click **Start
 
 ### URL parameters
 
-Skip the setup screen by passing `start` and `end` as query params:
+Skip the setup screen by passing `start` and `end` (and optionally `lang`) as query params:
 
 ```
-index.html?start=09:00&end=11:30
+index.html?start=09:00&end=11:30&lang=es
 ```
 
 Both values must be `HH:MM` (24-hour format). This is useful for projectors or shared links where the invigilator sets the URL once.

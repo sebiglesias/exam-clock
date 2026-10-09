@@ -30,7 +30,10 @@ The entire app lives in a single `index.html` — HTML structure, CSS (inlined `
 
 **Theme system.** A tiny IIFE in `<head>` reads `localStorage` and sets `data-theme` on `<html>` before first paint to prevent flash. A second IIFE in `<body>` wires up the three theme buttons (light / system / dark) and re-applies on OS preference change via `matchMedia`. CSS variables on `:root` and `html[data-theme="light"]` handle the two explicit states; `@media (prefers-color-scheme: light)` handles the system state.
 
+**Internationalization (i18n).** Supports English (`en`), Spanish (`es`), and Portuguese (`pt`). Priority: URL `?lang=` param → `localStorage` (`exam-clock-lang`) → browser `navigator.language` → default (`en`). The top bar has a switcher (`#lang-switcher`) that toggles language live across both `#setup` and `#clock-view` without reloading, while keeping URL params synchronized via `history.replaceState`. `launch()` passes `&lang=` to preserved pre-configured clock URLs.
+
 **Clock tick logic** (`tick()`, called every 1 s via `setInterval`):
 1. Before start → shows "Starts in X" countdown
 2. During exam → fills `#bar-fill` by percentage, shows remaining time
 3. After end → adds `.overtime` class (bar turns red, full width), counts up elapsed overtime
+
